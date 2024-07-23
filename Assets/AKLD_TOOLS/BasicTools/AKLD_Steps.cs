@@ -92,11 +92,11 @@ public class AKLD_Steps : MonoBehaviour
         if (velocidadRTPC != null)
         {
             float valorRTPC = velocidadActual / velocidadMaxima;
-            velocidadRTPC.SetValue(gameObject, valorRTPC);
+            velocidadRTPC.SetValue(this.gameObject, velocidadActual);
         }
 
         // Imprimir la velocidad actual del Rigidbody
-        Debug.Log("Speed: " + velocidadActual);
+        //Debug.Log("Speed: " + velocidadActual);
 
         // Lógica para determinar el momento de postear eventos basado en la distancia recorrida
         float distanciaFrame = Vector3.Distance(transform.position, posicionAnterior);
@@ -105,7 +105,7 @@ public class AKLD_Steps : MonoBehaviour
         if (distanciaRecorrida >= distanciaEntrePasos)
         {
             // Imprimir la distancia recorrida entre pasos
-            Debug.Log("Distancia entre pasos: " + distanciaRecorrida);
+            //Debug.Log("Distancia entre pasos: " + distanciaRecorrida);
 
             eventoPaso?.Post(gameObject);
             distanciaRecorrida = 0f;

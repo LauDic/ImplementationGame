@@ -4,7 +4,10 @@ using UnityEngine;
 
 public class AKLD_EventMultiBox : MonoBehaviour
 {
-    public Transform objectToCheck;  // Objeto cuya posición se verifica para determinar la activación del área
+    public GameObject objectToCheck;  // GameObject cuya posición se verifica para determinar la activación del área
+    public bool showPositionGizmo = true;  // Nueva variable para mostrar/ocultar gizmo de posición
+    public bool showRotationGizmo = true;  // Nueva variable para mostrar/ocultar gizmo de rotación
+    public bool showSizeGizmo = true;      // Nueva variable para mostrar/ocultar gizmo de tamaño
 
     [System.Serializable]
     public class AreaData
@@ -13,6 +16,7 @@ public class AKLD_EventMultiBox : MonoBehaviour
         public Vector3 relativeCenter = Vector3.zero;
         public Vector3 size = new Vector3(1f, 1f, 1f);
         public Color gizmoColor = Color.yellow;
+        public Quaternion rotation = Quaternion.identity; // Nueva propiedad de rotación
 
         [Header("Wwise On Enter")]
         public AK.Wwise.Event enterEvent = null;
@@ -43,7 +47,7 @@ public class AKLD_EventMultiBox : MonoBehaviour
 
         foreach (var area in areas)
         {
-            bool isInside = IsInsideArea(objectToCheck.position, area);
+            bool isInside = IsInsideArea(objectToCheck, area);
 
             if (isInside && !area.insideLastFrame && !area.exitedOnce)
             {
@@ -60,7 +64,7 @@ public class AKLD_EventMultiBox : MonoBehaviour
             {
                 area.insideLastFrame = false;
 
-                if (area.stopEventOnExit && area.enterEvent != null)
+                if (area.stopEventOnExit && area.areaActivated)
                 {
                     StopEvent(area.enterEvent);
                 }
@@ -68,8 +72,9 @@ public class AKLD_EventMultiBox : MonoBehaviour
                 if (area.OnExit && area.areaActivated)
                 {
                     EventOnExit(area.eventOnExit);
-                    area.exitedOnce = true;
                 }
+
+                area.exitedOnce = true;
             }
 
             if (isInside && area.exitedOnce)
@@ -79,29 +84,37 @@ public class AKLD_EventMultiBox : MonoBehaviour
         }
     }
 
-    private bool IsInsideArea(Vector3 position, AreaData area)
+    private bool IsInsideArea(GameObject objectToCheck, AreaData area)
     {
         Vector3 areaCenter = transform.position + area.relativeCenter;
         Vector3 halfSize = area.size * 0.5f;
 
-        return (position.x > areaCenter.x - halfSize.x && position.x < areaCenter.x + halfSize.x &&
-                position.y > areaCenter.y - halfSize.y && position.y < areaCenter.y + halfSize.y &&
-                position.z > areaCenter.z - halfSize.z && position.z < areaCenter.z + halfSize.z);
+        Vector3 localPos = Quaternion.Inverse(area.rotation) * (objectToCheck.transform.position - areaCenter);
+
+        return (localPos.x > -halfSize.x && localPos.x < halfSize.x &&
+                localPos.y > -halfSize.y && localPos.y < halfSize.y &&
+                localPos.z > -halfSize.z && localPos.z < halfSize.z);
     }
 
     private void UpdateEvent(AK.Wwise.Event myEvent)
     {
         myEvent.Post(this.gameObject);
+        Debug.Log("Posted entry event");
     }
 
     private void StopEvent(AK.Wwise.Event myEvent)
     {
         myEvent.Stop(this.gameObject);
+        Debug.Log("Stopped event");
     }
 
     private void EventOnExit(AK.Wwise.Event myEvent)
     {
-        myEvent.Post(this.gameObject);
+        if (myEvent != null)
+        {
+            myEvent.Post(this.gameObject);
+            Debug.Log("Posted exit event");
+        }
     }
 
 #if UNITY_EDITOR
@@ -140,11 +153,16 @@ public class AKLD_EventMultiBox : MonoBehaviour
             // Mostrar propiedades excepto m_Script
             DrawPropertiesExcluding(serializedObject, "m_Script");
 
+            // Mostrar controles de visibilidad de gizmos
+            AKLD_EventMultiBox manager = (AKLD_EventMultiBox)target;
+            manager.showPositionGizmo = EditorGUILayout.Toggle("Show Position Gizmo", manager.showPositionGizmo);
+            manager.showRotationGizmo = EditorGUILayout.Toggle("Show Rotation Gizmo", manager.showRotationGizmo);
+            manager.showSizeGizmo = EditorGUILayout.Toggle("Show Size Gizmo", manager.showSizeGizmo);
+
             // Apply changes
             serializedObject.ApplyModifiedProperties();
 
             // Botón para inicializar tamaños
-            AKLD_EventMultiBox manager = target as AKLD_EventMultiBox;
             if (GUILayout.Button("Initialize Sizes") && manager != null)
             {
                 InitializeSizes(manager);
@@ -181,18 +199,48 @@ public class AKLD_EventMultiBox : MonoBehaviour
 
             Handles.color = area.gizmoColor;
 
-            // Dibujar un cubo sin relleno para representar el área
-            Handles.DrawWireCube(areaGlobalCenter, area.size);
-
-            EditorGUI.BeginChangeCheck();
-            Vector3 newPosition = Handles.PositionHandle(areaGlobalCenter, Quaternion.identity);
-            if (EditorGUI.EndChangeCheck())
+            // Dibujar un cubo sin relleno para representar el área con rotación
+            Matrix4x4 rotationMatrix = Matrix4x4.TRS(areaGlobalCenter, area.rotation, Vector3.one);
+            using (new Handles.DrawingScope(rotationMatrix))
             {
-                Undo.RecordObject(manager, "Move Area");
-                area.relativeCenter += newPosition - areaGlobalCenter;
+                Handles.DrawWireCube(Vector3.zero, area.size);
+            }
+
+            if (manager.showPositionGizmo)
+            {
+                EditorGUI.BeginChangeCheck();
+                Vector3 newPosition = Handles.PositionHandle(areaGlobalCenter, Quaternion.identity);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    Undo.RecordObject(manager, "Move Area");
+                    area.relativeCenter += newPosition - areaGlobalCenter;
+                }
+            }
+
+            if (manager.showRotationGizmo)
+            {
+                EditorGUI.BeginChangeCheck();
+                Quaternion newRotation = Handles.RotationHandle(area.rotation, areaGlobalCenter);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    Undo.RecordObject(manager, "Rotate Area");
+                    area.rotation = newRotation;
+                }
+            }
+
+            if (manager.showSizeGizmo)
+            {
+                EditorGUI.BeginChangeCheck();
+                Vector3 newSize = Handles.ScaleHandle(area.size, areaGlobalCenter, area.rotation, 1f);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    Undo.RecordObject(manager, "Resize Area");
+                    area.size = newSize;
+                }
             }
         }
-
     }
 #endif
 }
+
+

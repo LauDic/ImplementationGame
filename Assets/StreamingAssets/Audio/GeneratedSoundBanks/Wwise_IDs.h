@@ -13,11 +13,15 @@ namespace AK
 {
     namespace EVENTS
     {
+        static const AkUniqueID AKLD_IMPACT = 3035946250U;
+        static const AkUniqueID AKLD_JUMP = 3300822600U;
         static const AkUniqueID AKLD_STEPS = 873705165U;
         static const AkUniqueID BOXAREATEST_01 = 319590943U;
         static const AkUniqueID BOXAREATEST_02 = 319590940U;
         static const AkUniqueID BOXAREATEST_03 = 319590941U;
         static const AkUniqueID BOXAREATEST_04_EXIT = 306762689U;
+        static const AkUniqueID GOAL_01 = 3165584694U;
+        static const AkUniqueID GOAL_02 = 3165584693U;
         static const AkUniqueID PLAY_MUSIC_01 = 3709355747U;
         static const AkUniqueID PLAY_MUSIC_RTPCBOX = 852013930U;
         static const AkUniqueID PLAY_SOUND_4 = 3038541946U;
@@ -45,6 +49,18 @@ namespace AK
 
     namespace SWITCHES
     {
+        namespace MOVEMENT
+        {
+            static const AkUniqueID GROUP = 2129636626U;
+
+            namespace SWITCH
+            {
+                static const AkUniqueID HIGH = 3550808449U;
+                static const AkUniqueID LOW = 545371365U;
+                static const AkUniqueID MID = 1182670505U;
+            } // namespace SWITCH
+        } // namespace MOVEMENT
+
         namespace TERRAIN
         {
             static const AkUniqueID GROUP = 354267144U;

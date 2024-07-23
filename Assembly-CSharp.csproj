@@ -66,6 +66,7 @@
     <Compile Include="Assets\AKLD_TOOLS\viejo, para eliminar\Areas\AKLD_TimerRTPC.cs" />
     <Compile Include="Assets\AKLD_TOOLS\viejo, para eliminar\Areas\AKLD_StateBox.cs" />
     <Compile Include="Assets\AKLD_TOOLS\viejo, para eliminar\AKLD_GameObjectReader.cs" />
+    <Compile Include="Assets\AKLD_TOOLS\BasicTools\Areas\AKLD_EventMultiBox.cs" />
     <Compile Include="Assets\AKLD_TOOLS\viejo, para eliminar\CustomEditorBase.cs" />
     <Compile Include="Assets\InputSystem\StarterAssetsInputs.cs" />
     <Compile Include="Assets\Mobile\Scripts\VirtualInputs\UIVirtualJoystick.cs" />
@@ -87,7 +88,6 @@
     <Compile Include="Assets\AKLD_TOOLS\viejo, para eliminar\Areas\AKLD_RTPCMultiBox.cs" />
     <Compile Include="Assets\AKLD_TOOLS\viejo, para eliminar\Areas\AKLD_TimerEvent.cs" />
     <Compile Include="Assets\Mobile\Scripts\VirtualInputs\UIVirtualTouchZone.cs" />
-    <Compile Include="Assets\AKLD_TOOLS\viejo, para eliminar\Areas\AKLD_EventMultiBox.cs" />
     <Compile Include="Assets\AKLD_TOOLS\viejo, para eliminar\AKLD_SOTemplate.cs" />
     <Compile Include="Assets\AKLD_TOOLS\viejo, para eliminar\AKLD_SOTemplateH.cs" />
   </ItemGroup>
