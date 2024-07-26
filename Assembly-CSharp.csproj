@@ -60,10 +60,12 @@
   <ItemGroup>
     <Compile Include="Assets\Mobile\Scripts\VirtualInputs\UIVirtualButton.cs" />
     <Compile Include="Assets\AKLD_TOOLS\viejo, para eliminar\Areas\AKLD_StateMultiBox.cs" />
+    <Compile Include="Assets\AKLD_TOOLS\AKLDSteps.cs" />
     <Compile Include="Assets\AKLD_TOOLS\viejo, para eliminar\Areas\AKLD_EventBox.cs" />
     <Compile Include="Assets\Mobile\Scripts\Utilities\MobileDisableAutoSwitchControls.cs" />
     <Compile Include="Assets\AKLD_TOOLS\viejo, para eliminar\AKLD_CollisionGO.cs" />
     <Compile Include="Assets\AKLD_TOOLS\viejo, para eliminar\Areas\AKLD_TimerRTPC.cs" />
+    <Compile Include="Assets\AKLD_TOOLS\GroundDetector.cs" />
     <Compile Include="Assets\AKLD_TOOLS\viejo, para eliminar\Areas\AKLD_StateBox.cs" />
     <Compile Include="Assets\AKLD_TOOLS\viejo, para eliminar\AKLD_GameObjectReader.cs" />
     <Compile Include="Assets\AKLD_TOOLS\BasicTools\Areas\AKLD_EventMultiBox.cs" />

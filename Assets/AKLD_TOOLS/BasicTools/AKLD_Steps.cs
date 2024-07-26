@@ -31,6 +31,17 @@ public class AKLD_Steps : MonoBehaviour
     private bool sePosteoStopWalk = false;
     private bool saltoPosteado = false;
     private bool wasGroundedLastFrame = true;
+    private bool floorCheck = false;
+
+    private CharacterController _controller;
+    private float _verticalVelocity;
+    public bool IsFalling { get; private set; }
+
+    public float smoothTime = 0.3f; // Tiempo de suavizado
+    private float velocity = 0f; // Almacena la velocidad de cambio
+    private float velocidadSuavizada = 0f; // La velocidad suavizada
+    public float smoothCoeficiente = 0.1f; // Coeficiente de suavizado
+
 
     private void Start()
     {
@@ -40,13 +51,31 @@ public class AKLD_Steps : MonoBehaviour
         }
 
         posicionAnterior = transform.position;
+
+
+
+        _controller = GetComponent<CharacterController>();
+        if (_controller == null)
+        {
+            Debug.LogError("No se encontró el CharacterController en el objeto.");
+        }
     }
 
     private void Update()
     {
+
+        //si estamos yendo para abajo, no postea el sonido de salto.
+        if (_controller != null)
+        {
+            _verticalVelocity = _controller.velocity.y;
+            IsFalling = _verticalVelocity < 0;
+
+        }
+
+
         isGrounded = Physics.Raycast(transform.position, Vector3.down, longitudRaycast);
 
-        if (!isGrounded && !saltoPosteado)
+        if (!isGrounded && !saltoPosteado && !floorCheck && !IsFalling)
         {
             saltoEvent?.Post(gameObject);
             saltoPosteado = true;
@@ -58,18 +87,24 @@ public class AKLD_Steps : MonoBehaviour
             saltoPosteado = false;
         }
 
-        if (!wasGroundedLastFrame && isGrounded)
+        if (!wasGroundedLastFrame && isGrounded && floorCheck)
         {
             fallEvent?.Post(gameObject);
         }
 
         wasGroundedLastFrame = isGrounded;
 
-        if (!isGrounded)
-            return;
-
         // Leer la velocidad del Rigidbody seleccionado usando la propiedad velocity
         float velocidadActual = rigidbodyToMeasure.velocity.magnitude;
+
+        // Debug.Log("Speed: " + velocidadActual);
+
+        if (!isGrounded)
+           return;
+
+        if (IsFalling)
+           return;
+
 
         if (velocidadActual < velocidadMinimaDetener && !sePosteoStopWalk)
         {
@@ -82,21 +117,49 @@ public class AKLD_Steps : MonoBehaviour
             sePosteoStopWalk = false;
         }
 
+        /*
         // Calcular factorExponencial de manera logarítmica ascendente
         float factorExponencial = Mathf.Pow((velocidadActual - velocidadMinima) / (velocidadMaxima - velocidadMinima), 2f);
         factorExponencial = Mathf.Clamp01(factorExponencial);
-
-        // Ajustar la distancia de paso en función de la velocidad actual y la curva logarítmica ascendente
-        float distanciaEntrePasos = Mathf.Lerp(distanciaMinimaPaso, distanciaMaximaPaso, factorExponencial);
+        
 
         if (velocidadRTPC != null)
         {
             float valorRTPC = velocidadActual / velocidadMaxima;
             velocidadRTPC.SetValue(this.gameObject, velocidadActual);
+
+        }
+        */
+
+        // Solo suavizar si la velocidad actual es mayor que la velocidad suavizada (solo ascendente)
+        if (velocidadActual > velocidadSuavizada)
+        {
+            velocidadSuavizada = Mathf.Lerp(velocidadSuavizada, velocidadActual, smoothCoeficiente * Time.deltaTime);
+        }
+        else
+        {
+            velocidadSuavizada = velocidadActual; // Si la velocidad actual es menor o igual, no suavizar
+        }
+
+        // Calcular factorExponencial de manera logarítmica ascendente usando la velocidad suavizada
+        float factorExponencial = Mathf.Pow((velocidadSuavizada - velocidadMinima) / (velocidadMaxima - velocidadMinima), 2f);
+        factorExponencial = Mathf.Clamp01(factorExponencial);
+
+        // Verificar si velocidadRTPC no es nulo y ajustar el valor RTPC
+        if (velocidadRTPC != null)
+        {
+            // Calcular valor RTPC usando la velocidad suavizada
+            float valorRTPC = velocidadSuavizada / velocidadMaxima;
+            velocidadRTPC.SetValue(this.gameObject, valorRTPC);
         }
 
         // Imprimir la velocidad actual del Rigidbody
-        //Debug.Log("Speed: " + velocidadActual);
+        Debug.Log("Speed-> " + velocidadActual);
+    
+
+        // Ajustar la distancia de paso en función de la velocidad actual y la curva logarítmica ascendente
+        float distanciaEntrePasos = Mathf.Lerp(distanciaMinimaPaso, distanciaMaximaPaso, factorExponencial);
+
 
         // Lógica para determinar el momento de postear eventos basado en la distancia recorrida
         float distanciaFrame = Vector3.Distance(transform.position, posicionAnterior);
@@ -114,6 +177,34 @@ public class AKLD_Steps : MonoBehaviour
         // Actualizar la posición anterior para el siguiente frame
         posicionAnterior = transform.position;
     }
+
+    void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Floor"))
+        {
+            floorCheck = true;
+            //Debug.Log("Collider: Tocando el suelo");
+        }
+    }
+
+    void OnTriggerStay(Collider other)
+    {
+        if (other.CompareTag("Floor"))
+        {
+            floorCheck = true;
+            //Debug.Log("Collider: OnTriggerStay");
+        }
+    }
+
+    void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Floor"))
+        {
+            floorCheck = false;
+            //Debug.Log("Collider: Dejó de tocar el suelo ->" + floorCheck);
+        }
+    }
+
 
     private void OnDrawGizmos()
     {
